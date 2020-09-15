@@ -63,11 +63,70 @@ def load_test_image(filepath):
 
     return(img)
 
+# Gan Monitor callback to print out images during training - taken from https://keras.io/examples/generative/cyclegan/
+
+class GANMonitor(tf.keras.callbacks.Callback):
+    '''
+    Callback to generate and save images after each epoch
+    Taken from https://keras.io/examples/generative/cyclegan/
+    '''
+    
+    def __init__(self, monitor_image_filepath, num_img=4):
+        self.monitor_image_filepath = monitor_image_filepath
+        self.num_img = num_img
+        
+    
+    def on_epoch_end(self, epoch, logs=None):
+        
+        # Generate 4 images, show on screen and save to file every 5 epochs
+        if epoch % 5 == 0:
+        
+            _, ax = plt.subplots(4,2,figsize=(12,12))
+            
+            for i, img in enumerate(train_photos.take(4)):
+                prediction = self.model.gen_G(img)[0].numpy()
+                prediction = (prediction * 127.5 + 127.5).astype(np.uint8)
+                img = (img[0] * 127.5 +127.5).numpy().astype(np.uint8)
+                
+                ax[i, 0].imshow(img)
+                ax[i, 1].imshow(prediction)
+                ax[i, 0].set_title("Input image")
+                ax[i, 1].set_title("Translated image")
+                ax[i, 0].axis("off")
+                ax[i, 1].axis("off")
+                
+                prediction = tf.keras.preprocessing.image.array_to_img(prediction)
+                prediction.save(
+                    "{monitor_image_filepath}/generated_img_{i}_{epoch}.png".format(monitor_image_filepath = self.monitor_image_filepath, i=i, epoch=epoch+1) 
+                                )
+            plt.show()
+            plt.close()
+        
+        else:
+            continue
+
 
 if __name__ == '__main__':
 
     # TODO READ IN CONFIG 
 
+    # FILEPATHS
+    PAINT_TRAIN_PATH = 
+    PHOTO_TRAIN_PATH = 
+    PAINT_TEST_PATH = 
+    PHOTO_TEST_PATH = 
+    MONITOR_IMAGE_FILEPATH = 
+    CHECKPOINT_FILEPATH = 
+    FINAL_WEIGHTS_PATH = 
+
+    # MODEL PARAMETERS
+    INPUT_SHAPE = 
+    K_INIT = 
+    DISCRIM_OPT = 
+    DISCRIM_LR = 
+    GEN_OPT = 
+    GEN_LR = 
+    EPOCHS = 
 
     AUTOTUNE = tf.data.experimental.AUTOTUNE
 
@@ -98,10 +157,27 @@ if __name__ == '__main__':
     # Compile model
 
     c_gan_model.compile(
-        discrim_x_optimizer = ,
-        discrim_y_optimizer = ,
-        gen_g_optimizer = ,
-        gen_f_optimizer = ,
-        gen_loss_fn = ,
-        discrim_loss_fn = 
+        discrim_x_optimizer = DISCRIM_OPT,
+        discrim_y_optimizer = DISCRIM_OPT,
+        gen_g_optimizer = GEN_OPT ,
+        gen_f_optimizer = GEN_OPT ,
+        gen_loss_fn = generator_loss ,
+        discrim_loss_fn = discriminator_loss 
     )
+
+    # Set up Callbacks
+    monitor = GANMonitor(MONITOR_IMAGE_FILEPATH)
+    ckpt_callback = tf.keras.callbacks.ModelCheckpoint(
+        filepath = CHECKPOINT_FILEPATH, save_weights_only=True, save_format = SAVE FORMAT, save_freq=562*5
+        ) #saves every 5 epochs
+
+    # Fit
+    c_gan_model.fit(
+        tf.data.Dataset.zip((train_photos,train_paintings)),
+        epochs = EPOCHS
+        verbose = 1,
+        callbacks = [monitor, ckpt_callback]
+    )
+
+    # Final model weights
+    c_gan_mode.save_weights(FINAL_WEIGHTS_PATH, save_format=SAVE_FORMAT)
