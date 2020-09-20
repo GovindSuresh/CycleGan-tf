@@ -1,0 +1,26 @@
+---
+    # Filepaths
+    PAINT_TRAIN_PATH: "datasets/ukiyoe2photo/trainA"
+    PHOTO_TRAIN_PATH: "datasets/ukiyoe2photo/trainB"
+    PAINT_TEST_PATH: "datasets/ukiyoe2photo/testA"
+    PHOTO_TEST_PATH: "datasets/ukiyoe2photo/testB"
+    MONITOR_IMAGE_FILEPATH: "training/train_imgs"
+    CHECKPOINT_FILEPATH: "training/model_ckp/cgan_ckpts.{epoch:03d}"
+    FINAL_WEIGHTS_PATH: "training/model_weights/cgan_final_weights"
+
+    # General parameters
+    SAVE_FORMAT: 'tf'
+
+    # Model parameters
+    INPUT_SHAPE: 
+        - 256
+        - 256
+        - 3
+    DISCRIM_LR: 0.0002
+    DISCRIM_BETA: 0.5     
+    GEN_LR: 0.0002
+    GEN_BETA: 0.5
+    EPOCHS: 90
+
+
+

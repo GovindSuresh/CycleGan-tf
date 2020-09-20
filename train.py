@@ -23,7 +23,7 @@ def pre_process_train_image(img):
     img = tf.image.random_flip_left_right(img)
 
     # Random crop
-    img = tf.image.random_crop(img, size=[256,256,3])
+    img = tf.image.random_crop(img, size=INPUT_SHAPE)
 
     # Normalize to [-1,1]
     img = tf.cast(img, dtype=float32)
@@ -37,7 +37,7 @@ def preprocess_test_image(img):
     '''
 
     # Resize
-    img = tf.image.resize(img, [256,256])
+    img = tf.image.resize(img, INPUT_SHAPE)
     img = tf.cast(img, dtype=tf.float32)
     return (img/127.5) - 1.0
 
@@ -108,26 +108,32 @@ class GANMonitor(tf.keras.callbacks.Callback):
 
 if __name__ == '__main__':
 
-    # TODO READ IN CONFIG 
+    # TODO READ IN CONFIG
+    
+    stream = open('model_config.yml', 'r')
+    param_dict = yaml.load(stream, Loader=yaml.SafeLoader)
 
     # FILEPATHS
-    PAINT_TRAIN_PATH = 
-    PHOTO_TRAIN_PATH = 
-    PAINT_TEST_PATH = 
-    PHOTO_TEST_PATH = 
-    MONITOR_IMAGE_FILEPATH = 
-    CHECKPOINT_FILEPATH = 
-    FINAL_WEIGHTS_PATH = 
+    PAINT_TRAIN_PATH = param_dict['PAINT_TRAIN_PATH']
+    PHOTO_TRAIN_PATH = param_dict['PHOTO_TRAIN_PATH']
+    PAINT_TEST_PATH = param_dict['PAINT_TEST_PATH']
+    PHOTO_TEST_PATH = param_dict['PHOTO_TEST_PATH']
+    MONITOR_IMAGE_FILEPATH = param_dict['MONITOR_IMAGE_FILEPATH']
+    CHECKPOINT_FILEPATH = param_dict['CHECKPOINT_FILEPATH']
+    FINAL_WEIGHTS_PATH = param_dict['FINAL_WEIGHTS_PATH']
 
     # MODEL PARAMETERS
-    INPUT_SHAPE = 
-    K_INIT = 
-    DISCRIM_OPT = 
-    DISCRIM_LR = 
-    GEN_OPT = 
-    GEN_LR = 
-    EPOCHS = 
+    INPUT_SHAPE = param_dict['INPUT_SHAPE']
+    DISCRIM_LR = param_dict['DISCRIM_LR']
+    DISCRIM_BETA = param_dict['DISCRIM_BETA']
+    GEN_LR = param_dict['GEN_LR']
+    GEN_BETA = param_dict['GEN_BETA']
+    EPOCHS = param_dict['EPOCHS']
+    K_INIT = tf.keras.initializers.RandomNormal(mean=0.0,stdev=0.02)
 
+
+    #GENERAL
+    SAVE_FORMAT = param_dict['SAVE_FORMAT']
     AUTOTUNE = tf.data.experimental.AUTOTUNE
 
     # Create tensorflow datasets
@@ -157,10 +163,10 @@ if __name__ == '__main__':
     # Compile model
 
     c_gan_model.compile(
-        discrim_x_optimizer = DISCRIM_OPT,
-        discrim_y_optimizer = DISCRIM_OPT,
-        gen_g_optimizer = GEN_OPT ,
-        gen_f_optimizer = GEN_OPT ,
+        discrim_x_optimizer = tf.keras.optimizers.Adam(learning_rate=DISCRIM_LR, beta_1=DISCRIM_BETA),
+        discrim_y_optimizer = tf.keras.optimizers.Adam(learning_rate=DISCRIM_LR, beta_1=DISCRIM_BETA),
+        gen_g_optimizer = tf.keras.optimizers.Adam(learning_rate=GEN_LR, beta_1=GEN_BETA),
+        gen_f_optimizer = tf.keras.optimizers.Adam(learning_rate=GEN_LR, beta_1=GEN_BETA),
         gen_loss_fn = generator_loss ,
         discrim_loss_fn = discriminator_loss 
     )
