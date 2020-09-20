@@ -130,14 +130,43 @@ def build_discriminator(input_shape, k_init):
 
     return tf.keras.models.Model(inputs=inp, outputs=output)
 
+def discriminator_loss(discrim_real, discrim_generated):
+    '''
+    Inputs: 
+    discrim_real - The real image
+    discrim_generated - The generated image from the generator
+    
+    Outputs:
+    total_discrim_loss - The sum of the real_loss and generated loss
+    
+    The function calculates the real and generated losses as the MSE between the discriminator output and the targets 
+    y_true is a matrix of 1's for the real images and 0s for the generated images.
+    '''
+    loss_object_mse = tf.keras.losses.MeanSquaredError()
+    real_loss = loss_object_mse(tf.ones_like(discrim_real), discrim_real)
+    generated_loss = loss_object_mse(tf.zeros_like(discrim_generated), discrim_generated)
+    total_discrim_loss = (real_loss + generated_loss) * 0.5 # multiply by 0.5 as suggested by authors
+    
+    return total_discrim_loss
+
+def generator_loss(discrim_gen_output):
+    
+    # If the discriminator thinks the generated output is real (1) 
+    # then the MSE between a matrix of ones and the discrim output will be smaller
+    loss_object_mse = tf.keras.losses.MeanSquaredError()
+    gen_loss = loss_object_mse(tf.ones_like(discrim_gen_output), discrim_gen_output)
+    
+    return gen_loss
+
 class CycleGAN(tf.keras.Model):
-    def __init__(self, discrim_x, discrim_y, gen_G, gen_F, lambda_val_cycle=10):
+    def __init__(self, discrim_x, discrim_y, gen_G, gen_F, lambda_val_cycle=10, lambda_val_identity=0.5):
         super(CycleGAN, self).__init__()
         self.gen_G = gen_G
         self.gen_F = gen_F
         self.discrim_x = discrim_x
         self.discrim_y = discrim_y
-        self.lambda_val_cycle = lambda_val_cycle 
+        self.lambda_val_cycle = lambda_val_cycle
+        self.lambda_val_identity = lambda_val_identity 
         
     def compile(self, discrim_x_optimizer, discrim_y_optimizer, gen_g_optimizer, gen_f_optimizer, gen_loss_fn, discrim_loss_fn):
         super(CycleGAN, self).compile()
@@ -186,8 +215,8 @@ class CycleGAN(tf.keras.Model):
             gen_F_loss = self.gen_loss_fn(discrim_generated_x)
             
             # Identity loss 
-            identity_loss_G = self.identity_loss_fn(real_y, identity_y)
-            identity_loss_F = self.identity_loss_fn(real_x, identity_x)
+            identity_loss_G = self.identity_loss_fn(real_y, identity_y) * self.lambda_val_cycle * self.lambda_val_identity
+            identity_loss_F = self.identity_loss_fn(real_x, identity_x) * self.lambda_val_cycle * self.lambda_val_identity
             
             # Cycle loss
             cycle_loss_G = self.cycle_loss_fn(real_y, generated_y) * self.lambda_val_cycle
