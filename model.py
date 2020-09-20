@@ -3,7 +3,7 @@
 
 import tensorflow as tf
 import tensorflow.keras.layers as layers
-from tfa.layers import InstanceNormalization
+from tensorflow_addons.layers import InstanceNormalization
 
 class ReflectionPad2D(layers.Layer):
     def __init__(self, padding=(1,1)):
@@ -12,25 +12,25 @@ class ReflectionPad2D(layers.Layer):
 
     def call(self, input_tensor, mask=None):
         padding_width, padding_height = self.padding
-        padding_tensor = [[0,0],[padding_height,padding_height],[padding_width,padding_width],[0,0],[0,0],]
+        padding_tensor = [[0,0],[padding_height,padding_height],[padding_width,padding_width],[0,0]]
 
         return tf.pad(input_tensor,padding_tensor,mode='REFLECT')
 
 class ResNetBlock(layers.Layer):
-    def __init__(self, num_filters, kernel_init, use_1x1conv=False,strides=1):
+    def __init__(self, num_filters, kernel_init=None, use_1x1conv=False,strides=1):
         super(ResNetBlock, self).__init__()
         
-        if kernel_init = None:
+        if kernel_init == None:
             self.kernel_init = tf.keras.initializers.RandomNormal(0.0,0.02) # Used in the original implementation
         else:
             self.kernel_init = kernel_init 
         
-        self.conv_1 = layers.Conv2D(256, kernel_size=(3,3), strides=1, padding='same', kernel_initializer = init)
-        self.conv_2 = layers.Conv2D(256, kernel_size=(3,3), strides=1, padding='same', kernel_initializer = init)
+        self.conv_1 = layers.Conv2D(256, kernel_size=(3,3), strides=1, padding='valid', kernel_initializer = kernel_init, use_bias=False)
+        self.conv_2 = layers.Conv2D(256, kernel_size=(3,3), strides=1, padding='valid', kernel_initializer = kernel_init, use_bias=False)
         self.conv_3 = None
 
         if use_1x1conv == True:
-            self.conv_3 = layers.Conv2D(256, kernel_size=(1,1). strides=1)
+            self.conv_3 = layers.Conv2D(256, kernel_size=(1,1), strides=1)
         
         # Normalization layers
         self.instance_norm_1 = InstanceNormalization(axis=-1)
@@ -46,7 +46,7 @@ class ResNetBlock(layers.Layer):
         Y = self.reflect_pad1(X)
         Y =  tf.keras.activations.relu(self.instance_norm_1(self.conv_1(X)))
         Y = self.reflect_pad2(X)
-        Y = self.instance_norm_2(self.conv_2(Y)))
+        Y = self.instance_norm_2(self.conv_2(Y))
 
         Y = tf.add(Y,X)
 
@@ -69,15 +69,15 @@ def build_generator(input_shape, k_init):
     x = layers.Activation('relu')(x)
 
     #ResNet Blocks
-    x = ResNetBlock(256)(x)
-    x = ResNetBlock(256)(x)
-    x = ResNetBlock(256)(x)
-    x = ResNetBlock(256)(x)
-    x = ResNetBlock(256)(x)
-    x = ResNetBlock(256)(x)
-    x = ResNetBlock(256)(x)
-    x = ResNetBlock(256)(x)
-    x = ResNetBlock(256)(x)
+    x = ResNetBlock(256, kernel_init =k_init)(x)
+    x = ResNetBlock(256, kernel_init =k_init)(x)
+    x = ResNetBlock(256, kernel_init =k_init)(x)
+    x = ResNetBlock(256, kernel_init =k_init)(x)
+    x = ResNetBlock(256, kernel_init =k_init)(x)
+    x = ResNetBlock(256, kernel_init =k_init)(x)
+    x = ResNetBlock(256, kernel_init =k_init)(x)
+    x = ResNetBlock(256, kernel_init =k_init)(x)
+    x = ResNetBlock(256, kernel_init =k_init)(x)
 
     #Upsampling layers
     x = tf.keras.layers.Conv2DTranspose(128, kernel_size=(3,3), kernel_initializer=k_init, strides=2, padding='same')(x)
@@ -107,21 +107,21 @@ def build_discriminator(input_shape, k_init):
     #C128 block
     x = layers.Conv2D(128, kernel_size=(4,4), kernel_initializer=k_init, strides=2, padding='same')(x)
     x = InstanceNormalization(axis=-1)(x)
-    x = layers.LeakyRelU(alpha=-0.2)(x)
+    x = layers.LeakyReLU(alpha=-0.2)(x)
 
     #C256 block
     x = layers.Conv2D(256, kernel_size=(4,4), kernel_initializer=k_init, strides=2, padding='same')(x)
     x = InstanceNormalization(axis=-1)(x)
-    x = layers.LeakyRelU(alpha=0.2)(x)
+    x = layers.LeakyReLU(alpha=0.2)(x)
 
     #C512 blocks
     x = layers.Conv2D(256, kernel_size=(4,4), kernel_initializer=k_init, strides=2, padding='same')(x)
     x = InstanceNormalization(axis=-1)(x)
-    x = layers.LeakyRelU(alpha=0.2)(x)
+    x = layers.LeakyReLU(alpha=0.2)(x)
 
     x = layers.Conv2D(512, kernel_size=(4,4), padding='same', kernel_initializer=k_init)(x)
-	x = InstanceNormalization(axis=-1)(x)
-	x = layers.LeakyReLU(alpha=0.2)(x)
+    x = InstanceNormalization(axis=-1)(x)
+    x = layers.LeakyReLU(alpha=0.2)(x)
 
     #Patch output based on PatchGAN
     output = layers.Conv2D(1, kernel_size=(4,4), padding='same', kernel_initializer=k_init)(x)

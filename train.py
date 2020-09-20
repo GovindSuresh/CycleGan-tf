@@ -1,5 +1,6 @@
 from model import *
 import tensorflow as tf
+import yaml
 
 ###########################
 # Image loading functions #
@@ -8,11 +9,11 @@ import tensorflow as tf
 def decode_image(img):
     '''Decode jpg images and return 286,286,3 tensors'''
 
-    img = tf.image.decode_jpg(img, channels=3)
+    img = tf.image.decode_jpeg(img, channels=3)
 
     return tf.image.resize(img, [286,286]) 
 
-def pre_process_train_image(img):
+def preprocess_train_image(img):
     '''
     Applies to training images:
         - Left Right random flip
@@ -26,7 +27,7 @@ def pre_process_train_image(img):
     img = tf.image.random_crop(img, size=INPUT_SHAPE)
 
     # Normalize to [-1,1]
-    img = tf.cast(img, dtype=float32)
+    img = tf.cast(img, dtype=tf.float32)
     return (img/127.5) - 1.0
 
 def preprocess_test_image(img):
@@ -37,7 +38,7 @@ def preprocess_test_image(img):
     '''
 
     # Resize
-    img = tf.image.resize(img, INPUT_SHAPE)
+    img = tf.image.resize(img, INPUT_SHAPE[:-1])
     img = tf.cast(img, dtype=tf.float32)
     return (img/127.5) - 1.0
 
@@ -48,7 +49,7 @@ def load_train_image(filepath):
 
     img = tf.io.read_file(filepath)
     img = decode_image(img)
-    img = preproces_train_image(img)
+    img = preprocess_train_image(img)
 
     return img
 
@@ -102,14 +103,15 @@ class GANMonitor(tf.keras.callbacks.Callback):
             plt.show()
             plt.close()
         
-        else:
-            continue
+        
 
 
 if __name__ == '__main__':
 
-    # TODO READ IN CONFIG
+    # Check how many GPU's available
+    print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
     
+    # READ IN CONFIG
     stream = open('model_config.yml', 'r')
     param_dict = yaml.load(stream, Loader=yaml.SafeLoader)
 
@@ -129,7 +131,7 @@ if __name__ == '__main__':
     GEN_LR = param_dict['GEN_LR']
     GEN_BETA = param_dict['GEN_BETA']
     EPOCHS = param_dict['EPOCHS']
-    K_INIT = tf.keras.initializers.RandomNormal(mean=0.0,stdev=0.02)
+    K_INIT = tf.keras.initializers.RandomNormal(mean=0.0,stddev=0.02)
 
 
     #GENERAL
@@ -144,7 +146,7 @@ if __name__ == '__main__':
     test_photos = tf.data.Dataset.list_files(PHOTO_TEST_PATH + '/*.jpg')
 
     train_paintings = train_paintings.map(load_train_image, num_parallel_calls = AUTOTUNE).cache().shuffle(1000).batch(1)
-    train_photos = train_photos.map(loat_train_image, num_parallel_calls = AUTOTUNE).cache().shuffle(1000).batch(1)
+    train_photos = train_photos.map(load_train_image, num_parallel_calls = AUTOTUNE).cache().shuffle(1000).batch(1)
 
     test_paintings = test_paintings.map(load_test_image, num_parallel_calls = AUTOTUNE).cache().shuffle(1000).batch(1)
     test_photos = test_photos.map(load_test_image, num_parallel_calls = AUTOTUNE).cache().shuffle(1000).batch(1)
@@ -152,13 +154,13 @@ if __name__ == '__main__':
 
     # Create generators, discriminators and CycleGAN model
 
-    generator_g = model.build_generator(input_shape=INPUT_SHAPE, k_init = K_INIT)
-    generator_f = model.build_generator(input_shape=INPUT_SHAPE, k_init = K_INIT)
+    generator_g = build_generator(input_shape=INPUT_SHAPE, k_init = K_INIT)
+    generator_f = build_generator(input_shape=INPUT_SHAPE, k_init = K_INIT)
 
-    discriminator_x = model.build_discriminator(input_shape=INPUT_SHAPE, k_init= K_INIT)
-    discriminator_y = model.build_discriminator(input_shape=INPUT_SHAPE, k_init=K_INIT)
+    discriminator_x = build_discriminator(input_shape=INPUT_SHAPE, k_init= K_INIT)
+    discriminator_y = build_discriminator(input_shape=INPUT_SHAPE, k_init=K_INIT)
 
-    c_gan_model = model.CycleGAN(discrim_x = discriminator_x, discrim_y = discriminator_y, gen_G = generator_g, gen_F = generator_F )
+    c_gan_model = CycleGAN(discrim_x = discriminator_x, discrim_y = discriminator_y, gen_G = generator_g, gen_F = generator_f )
 
     # Compile model
 
@@ -174,13 +176,12 @@ if __name__ == '__main__':
     # Set up Callbacks
     monitor = GANMonitor(MONITOR_IMAGE_FILEPATH)
     ckpt_callback = tf.keras.callbacks.ModelCheckpoint(
-        filepath = CHECKPOINT_FILEPATH, save_weights_only=True, save_format = SAVE FORMAT, save_freq=562*5
-        ) #saves every 5 epochs
+        filepath = CHECKPOINT_FILEPATH, save_weights_only=True, save_format = SAVE_FORMAT, save_freq=562*5) #saves every 5 epochs
 
     # Fit
     c_gan_model.fit(
         tf.data.Dataset.zip((train_photos,train_paintings)),
-        epochs = EPOCHS
+        epochs = EPOCHS,
         verbose = 1,
         callbacks = [monitor, ckpt_callback]
     )
