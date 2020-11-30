@@ -25,8 +25,10 @@ class ResNetBlock(layers.Layer):
         else:
             self.kernel_init = kernel_init 
         
-        self.conv_1 = layers.Conv2D(256, kernel_size=(3,3), strides=1, padding='valid', kernel_initializer = kernel_init, use_bias=False)
-        self.conv_2 = layers.Conv2D(256, kernel_size=(3,3), strides=1, padding='valid', kernel_initializer = kernel_init, use_bias=False)
+        self.conv_1 = layers.Conv2D(256, kernel_size=(3,3), strides=1, padding='valid', 
+                                    kernel_initializer = kernel_init, use_bias=False)
+        self.conv_2 = layers.Conv2D(256, kernel_size=(3,3), strides=1, padding='valid', 
+                                    kernel_initializer = kernel_init, use_bias=False)
         self.conv_3 = None
 
         if use_1x1conv == True:
@@ -41,14 +43,15 @@ class ResNetBlock(layers.Layer):
         self.reflect_pad2 = ReflectionPad2D()
 
     def call(self, X):
-        # Reflection pad -> Conv -> Instance Norm -> Relu -> Reflection pad -> conv -> Instance Norm -> concat output and input
+        # Reflection pad -> Conv -> Instance Norm -> Relu -> Reflection pad -> conv -> 
+        # Instance Norm -> concat output and input
         
         Y = self.reflect_pad1(X)
-        Y =  tf.keras.activations.relu(self.instance_norm_1(self.conv_1(X)))
-        Y = self.reflect_pad2(X)
-        Y = self.instance_norm_2(self.conv_2(Y))
+        Y =  tf.keras.activations.relu(self.instance_norm_1(self.conv_1(Y), training=True))
+        Y = self.reflect_pad2(Y)
+        Y = self.instance_norm_2(self.conv_2(Y), training=True)
 
-        Y = tf.add(Y,X)
+        Y = layers.add([Y,X])
 
         return Y
 
@@ -80,16 +83,20 @@ def build_generator(input_shape, k_init):
     x = ResNetBlock(256, kernel_init =k_init)(x)
 
     #Upsampling layers
-    x = tf.keras.layers.Conv2DTranspose(128, kernel_size=(3,3), kernel_initializer=k_init, strides=2, padding='same')(x)
+    x = tf.keras.layers.Conv2DTranspose(128, kernel_size=(3,3), 
+                                    kernel_initializer=k_init, strides=2, padding='same')(x)
     x = InstanceNormalization(axis=-1)(x)
     x = layers.Activation('relu')(x)
-    x = tf.keras.layers.Conv2DTranspose(64, kernel_size=(3,3), kernel_initializer=k_init, strides=2, padding='same')(x)
+    x = tf.keras.layers.Conv2DTranspose(64, kernel_size=(3,3), 
+                                    kernel_initializer=k_init, strides=2, padding='same')(x)
     x = InstanceNormalization(axis=-1)(x)
     x = layers.Activation('relu')(x)
 
     # Final block 
-    last_layer = tf.keras.layers.Conv2DTranspose(3, kernel_size=(7,7), kernel_initializer=k_init, strides=1, padding='same')(x)
+    last_layer = tf.keras.layers.Conv2DTranspose(3, kernel_size=(7,7),
+                                    kernel_initializer=k_init, strides=1, padding='same')(x)
     last_layer = InstanceNormalization(axis=-1)(last_layer)
+    
     # as with the original paper, the last activation is tanh rather than relu 
     last_layer = layers.Activation('tanh')(last_layer)
     
@@ -181,7 +188,7 @@ class CycleGAN(tf.keras.Model):
         self.identity_loss_fn = tf.keras.losses.MeanAbsoluteError()
         
     def train_step(self, data):
-        # X will be the real picss and y will be the paintings.
+        # X will be the real pics and y will be the paintings.
         real_x, real_y = data
         
         # CYCLEGAN TRAINING STEP 
