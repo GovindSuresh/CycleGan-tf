@@ -17,9 +17,11 @@ fi
 
 echo "Specified [$FILE]"
 URL=https://people.eecs.berkeley.edu/~taesung_park/CycleGAN/datasets/$FILE.zip
-ZIP_FILE=./datasets/$FILE.zip
-TARGET_DIR=./datasets/$FILE/
-curl -l $URL -o $ZIP_FILE
-mkdir $TARGET_DIR
+
+
+ZIP_FILE=$FILE.zip
+TARGET_DIR=$FILE
+curl -l -k $URL -o $ZIP_FILE
+mkdir -p ./datasets/$TARGET_DIR
 unzip $ZIP_FILE -d ./datasets/
 rm $ZIP_FILE
