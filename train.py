@@ -1,110 +1,7 @@
-from model import *
 import tensorflow as tf
 import yaml
-
-###########################
-# Image loading functions #
-###########################
-
-def decode_image(img):
-    '''Decode jpg images and return 286,286,3 tensors'''
-
-    img = tf.image.decode_jpeg(img, channels=3)
-
-    return tf.image.resize(img, [286,286]) 
-
-def preprocess_train_image(img):
-    '''
-    Applies to training images:
-        - Left Right random flip
-        - Random Crop to [256,256,3]
-        - Normalize to pixel range of [-1,1] as done in the original implementation
-    '''
-    # Random flip
-    img = tf.image.random_flip_left_right(img)
-
-    # Random crop
-    img = tf.image.random_crop(img, size=INPUT_SHAPE)
-
-    # Normalize to [-1,1]
-    img = tf.cast(img, dtype=tf.float32)
-    return (img/127.5) - 1.0
-
-def preprocess_test_image(img):
-    '''
-    Applies to test images
-        - Resizes to [256,256,3]
-        - Normalize to pixel range of [-1,1] as done in the original implementation
-    '''
-
-    # Resize
-    img = tf.image.resize(img, INPUT_SHAPE[:-1])
-    img = tf.cast(img, dtype=tf.float32)
-    return (img/127.5) - 1.0
-
-def load_train_image(filepath):
-    '''
-    Loads and preprocess training images
-    '''
-
-    img = tf.io.read_file(filepath)
-    img = decode_image(img)
-    img = preprocess_train_image(img)
-
-    return img
-
-def load_test_image(filepath):
-    '''
-    Loads and preprocess test images
-    '''
-
-    img = tf.io.read_file(filepath)
-    img = decode_image(img)
-    img = preprocess_test_image(img)
-
-    return(img)
-
-# Gan Monitor callback to print out images during training - taken from https://keras.io/examples/generative/cyclegan/
-
-class GANMonitor(tf.keras.callbacks.Callback):
-    '''
-    Callback to generate and save images after each epoch
-    Taken from https://keras.io/examples/generative/cyclegan/
-    '''
-    
-    def __init__(self, monitor_image_filepath, num_img=4):
-        self.monitor_image_filepath = monitor_image_filepath
-        self.num_img = num_img
-        
-    
-    def on_epoch_end(self, epoch, logs=None):
-        
-        # Generate 4 images, show on screen and save to file every 5 epochs
-        if epoch % 5 == 0:
-        
-            _, ax = plt.subplots(4,2,figsize=(12,12))
-            
-            for i, img in enumerate(train_photos.take(4)):
-                prediction = self.model.gen_G(img)[0].numpy()
-                prediction = (prediction * 127.5 + 127.5).astype(np.uint8)
-                img = (img[0] * 127.5 +127.5).numpy().astype(np.uint8)
-                
-                ax[i, 0].imshow(img)
-                ax[i, 1].imshow(prediction)
-                ax[i, 0].set_title("Input image")
-                ax[i, 1].set_title("Translated image")
-                ax[i, 0].axis("off")
-                ax[i, 1].axis("off")
-                
-                prediction = tf.keras.preprocessing.image.array_to_img(prediction)
-                prediction.save(
-                    "{monitor_image_filepath}/generated_img_{i}_{epoch}.png".format(monitor_image_filepath = self.monitor_image_filepath, i=i, epoch=epoch+1) 
-                                )
-            plt.show()
-            plt.close()
-        
-        
-
+from model import *
+from data_loading import *
 
 if __name__ == '__main__':
 
@@ -198,4 +95,4 @@ if __name__ == '__main__':
     )
 
     # Final model weights
-    c_gan_mode.save_weights(FINAL_WEIGHTS_PATH, save_format=SAVE_FORMAT)
+    c_gan_model.save_weights(FINAL_WEIGHTS_PATH, save_format=SAVE_FORMAT)

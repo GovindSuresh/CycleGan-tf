@@ -12,8 +12,8 @@
     SAVE_FORMAT: 'tf'
     
     #Callbacks
-    MONITOR: FALSE
-    CKPTS: True
+    MONITOR: False
+    CKPTS: False
 
     # Model parameters
     INPUT_SHAPE: 

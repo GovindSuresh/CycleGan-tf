@@ -263,3 +263,45 @@ class CycleGAN(tf.keras.Model):
             'discrim_x_loss': d_loss_x,
             'discrim_y_loss': d_loss_y,
         }
+
+## CUSTOM CALLBACKS
+# Gan Monitor callback to print out images during training - taken from https://keras.io/examples/generative/cyclegan/
+
+class GANMonitor(tf.keras.callbacks.Callback):
+    '''
+    Callback to generate and save images after each epoch
+    Taken from https://keras.io/examples/generative/cyclegan/
+    '''
+    
+    def __init__(self, monitor_image_filepath, num_img=4):
+        self.monitor_image_filepath = monitor_image_filepath
+        self.num_img = num_img
+        
+    
+    def on_epoch_end(self, epoch, logs=None):
+        
+        # Generate 4 images, show on screen and save to file every 5 epochs
+        if epoch % 5 == 0:
+        
+            _, ax = plt.subplots(4,2,figsize=(12,12))
+            
+            for i, img in enumerate(train_photos.take(4)):
+                prediction = self.model.gen_G(img)[0].numpy()
+                prediction = (prediction * 127.5 + 127.5).astype(np.uint8)
+                img = (img[0] * 127.5 +127.5).numpy().astype(np.uint8)
+                
+                ax[i, 0].imshow(img)
+                ax[i, 1].imshow(prediction)
+                ax[i, 0].set_title("Input image")
+                ax[i, 1].set_title("Translated image")
+                ax[i, 0].axis("off")
+                ax[i, 1].axis("off")
+                
+                prediction = tf.keras.preprocessing.image.array_to_img(prediction)
+                prediction.save(
+                    "{monitor_image_filepath}/generated_img_{i}_{epoch}.png".format(monitor_image_filepath = self.monitor_image_filepath, i=i, epoch=epoch+1) 
+                                )
+            plt.show()
+            plt.close()
+        
+        
