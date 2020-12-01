@@ -39,16 +39,16 @@ class ResNetBlock(layers.Layer):
         self.instance_norm_2 = InstanceNormalization(axis=-1)
 
         # Reflection padding layers
-        self.reflect_pad1 = ReflectionPad2D()
-        self.reflect_pad2 = ReflectionPad2D()
+        self.reflect_pad_1 = ReflectionPad2D()
+        self.reflect_pad_2 = ReflectionPad2D()
 
     def call(self, X):
         # Reflection pad -> Conv -> Instance Norm -> Relu -> Reflection pad -> conv -> 
         # Instance Norm -> concat output and input
         
-        Y = self.reflect_pad1(X)
+        Y = self.reflect_pad_1(X)
         Y =  tf.keras.activations.relu(self.instance_norm_1(self.conv_1(Y), training=True))
-        Y = self.reflect_pad2(Y)
+        Y = self.reflect_pad_2(Y)
         Y = self.instance_norm_2(self.conv_2(Y), training=True)
 
         Y = layers.add([Y,X])

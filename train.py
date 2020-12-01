@@ -133,9 +133,13 @@ if __name__ == '__main__':
     EPOCHS = param_dict['EPOCHS']
     K_INIT = tf.keras.initializers.RandomNormal(mean=0.0,stddev=0.02)
 
-
-    #GENERAL
+    # CHECKPOINT PARAMETERS
+    MONITOR = param_dict['MONITOR']
+    CHECKPOINTS = param_dict['CKPTS']
+    
+    # GENERAL
     SAVE_FORMAT = param_dict['SAVE_FORMAT']
+    
     AUTOTUNE = tf.data.experimental.AUTOTUNE
 
     # Create tensorflow datasets
@@ -160,7 +164,8 @@ if __name__ == '__main__':
     discriminator_x = build_discriminator(input_shape=INPUT_SHAPE, k_init= K_INIT)
     discriminator_y = build_discriminator(input_shape=INPUT_SHAPE, k_init=K_INIT)
 
-    c_gan_model = CycleGAN(discrim_x = discriminator_x, discrim_y = discriminator_y, gen_G = generator_g, gen_F = generator_f )
+    c_gan_model = CycleGAN(discrim_x = discriminator_x, discrim_y = discriminator_y, 
+                        gen_G = generator_g, gen_F = generator_f)
 
     # Compile model
 
@@ -174,16 +179,22 @@ if __name__ == '__main__':
     )
 
     # Set up Callbacks
-    monitor = GANMonitor(MONITOR_IMAGE_FILEPATH)
-    ckpt_callback = tf.keras.callbacks.ModelCheckpoint(
-        filepath = CHECKPOINT_FILEPATH, save_weights_only=True, save_format = SAVE_FORMAT, save_freq=562*5) #saves every 5 epochs
-
+    callback_list = []
+    if MONITOR == True:
+        monitor = GANMonitor(MONITOR_IMAGE_FILEPATH)
+        callback_list.append(monitor)
+    
+    if CHECKPOINTS == True: 
+        ckpt_callback = tf.keras.callbacks.ModelCheckpoint(
+            filepath = CHECKPOINT_FILEPATH, save_weights_only=True, save_format = SAVE_FORMAT, save_freq=562*5) #saves every 5 epochs
+        callback_list.append(ckpt_callback)
+    
     # Fit
     c_gan_model.fit(
         tf.data.Dataset.zip((train_photos,train_paintings)),
         epochs = EPOCHS,
         verbose = 1,
-        callbacks = [monitor, ckpt_callback]
+        callbacks = callback_list
     )
 
     # Final model weights

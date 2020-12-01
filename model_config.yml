@@ -6,10 +6,14 @@
     PHOTO_TEST_PATH: "datasets/ukiyoe2photo/testB"
     MONITOR_IMAGE_FILEPATH: "training/train_imgs"
     CHECKPOINT_FILEPATH: "training/model_ckp/cgan_ckpts.{epoch:03d}"
-    FINAL_WEIGHTS_PATH: "training/model_weights/cgan_final_weights"
+    FINAL_WEIGHTS_PATH: "training/model_weights/ukiyoe2photo_final_weights"
 
     # General parameters
     SAVE_FORMAT: 'tf'
+    
+    #Callbacks
+    MONITOR: FALSE
+    CKPTS: True
 
     # Model parameters
     INPUT_SHAPE: 
