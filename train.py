@@ -1,7 +1,64 @@
 import tensorflow as tf
 import yaml
 from model import *
-from data_loading import *
+
+def decode_image(img):
+    '''Decode jpg images and return 286,286,3 tensors'''
+
+    img = tf.image.decode_jpeg(img, channels=3)
+
+    return tf.image.resize(img, [286,286]) 
+
+def preprocess_train_image(img, size):
+    '''
+    Applies to training images:
+        - Left Right random flip
+        - Random Crop to [256,256,3]
+        - Normalize to pixel range of [-1,1] as done in the original implementation
+    '''
+    # Random flip
+    img = tf.image.random_flip_left_right(img)
+
+    # Random crop
+    img = tf.image.random_crop(img, size=size)
+
+    # Normalize to [-1,1]
+    img = tf.cast(img, dtype=tf.float32)
+    return (img/127.5) - 1.0
+
+def preprocess_test_image(img, size):
+    '''
+    Applies to test images
+        - Resizes to [256,256,3]
+        - Normalize to pixel range of [-1,1] as done in the original implementation
+    '''
+
+    # Resize
+    img = tf.image.resize(img, size[:-1])
+    img = tf.cast(img, dtype=tf.float32)
+    return (img/127.5) - 1.0
+
+def load_train_image(filepath, size):
+    '''
+    Loads and preprocess training images
+    '''
+
+    img = tf.io.read_file(filepath)
+    img = decode_image(img)
+    img = preprocess_train_image(img, size=size)
+
+    return img
+
+def load_test_image(filepath):
+    '''
+    Loads and preprocess test images
+    '''
+
+    img = tf.io.read_file(filepath)
+    img = decode_image(img)
+    img = preprocess_test_image(img)
+
+    return(img)
 
 if __name__ == '__main__':
 
@@ -71,7 +128,6 @@ if __name__ == '__main__':
     )
 
     # Set up Callbacks
-<<<<<<< HEAD
     callback_list = []
     if MONITOR == True:
         monitor = GANMonitor(MONITOR_IMAGE_FILEPATH)
@@ -87,12 +143,6 @@ if __name__ == '__main__':
         tensorboard = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
         callback_list.append(tensorboard)
     
-=======
-    monitor = GANMonitor(MONITOR_IMAGE_FILEPATH)
-    ckpt_callback = tf.keras.callbacks.ModelCheckpoint(
-        filepath = CHECKPOINT_FILEPATH, save_weights_only=True, save_format = SAVE_FORMAT, save_freq=562*5) #saves every 5 epochs
-
->>>>>>> parent of 405e253... added options to choose callbacks
     # Fit
     c_gan_model.fit(
         tf.data.Dataset.zip((train_photos,train_paintings)),
