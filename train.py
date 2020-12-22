@@ -2,6 +2,10 @@ import tensorflow as tf
 import yaml
 from model import *
 
+###########################
+# Image loading functions #
+###########################
+
 def decode_image(img):
     '''Decode jpg images and return 286,286,3 tensors'''
 
@@ -9,7 +13,7 @@ def decode_image(img):
 
     return tf.image.resize(img, [286,286]) 
 
-def preprocess_train_image(img, size):
+def preprocess_train_image(img):
     '''
     Applies to training images:
         - Left Right random flip
@@ -20,13 +24,13 @@ def preprocess_train_image(img, size):
     img = tf.image.random_flip_left_right(img)
 
     # Random crop
-    img = tf.image.random_crop(img, size=size)
+    img = tf.image.random_crop(img, size=INPUT_SHAPE)
 
     # Normalize to [-1,1]
     img = tf.cast(img, dtype=tf.float32)
     return (img/127.5) - 1.0
 
-def preprocess_test_image(img, size):
+def preprocess_test_image(img):
     '''
     Applies to test images
         - Resizes to [256,256,3]
@@ -34,18 +38,18 @@ def preprocess_test_image(img, size):
     '''
 
     # Resize
-    img = tf.image.resize(img, size[:-1])
+    img = tf.image.resize(img, INPUT_SHAPE[:-1])
     img = tf.cast(img, dtype=tf.float32)
     return (img/127.5) - 1.0
 
-def load_train_image(filepath, size):
+def load_train_image(filepath):
     '''
     Loads and preprocess training images
     '''
 
     img = tf.io.read_file(filepath)
     img = decode_image(img)
-    img = preprocess_train_image(img, size=size)
+    img = preprocess_train_image(img)
 
     return img
 
@@ -87,8 +91,12 @@ if __name__ == '__main__':
     EPOCHS = param_dict['EPOCHS']
     K_INIT = tf.keras.initializers.RandomNormal(mean=0.0,stddev=0.02)
 
+    # CHECKPOINT PARAMETERS
+    MONITOR = param_dict['MONITOR']
+    CHECKPOINTS = param_dict['CKPTS']
+    TENSORBOARD = param_dict['TENSORBOARD']
 
-    #GENERAL
+    # GENERAL
     SAVE_FORMAT = param_dict['SAVE_FORMAT']
     AUTOTUNE = tf.data.experimental.AUTOTUNE
 
@@ -99,8 +107,8 @@ if __name__ == '__main__':
     test_paintings = tf.data.Dataset.list_files(PAINT_TEST_PATH + '/*.jpg')
     test_photos = tf.data.Dataset.list_files(PHOTO_TEST_PATH + '/*.jpg')
 
-    train_paintings = train_paintings.map(load_train_image(*,size=INPUT_SHAPE), num_parallel_calls = AUTOTUNE).cache().shuffle(1000).batch(1)
-    train_photos = train_photos.map(load_train_image(*,size=INPUT_SHAPE), num_parallel_calls = AUTOTUNE).cache().shuffle(1000).batch(1)
+    train_paintings = train_paintings.map(load_train_image, num_parallel_calls = AUTOTUNE).cache().shuffle(1000).batch(1)
+    train_photos = train_photos.map(load_train_image, num_parallel_calls = AUTOTUNE).cache().shuffle(1000).batch(1)
 
     test_paintings = test_paintings.map(load_test_image, num_parallel_calls = AUTOTUNE).cache().shuffle(1000).batch(1)
     test_photos = test_photos.map(load_test_image, num_parallel_calls = AUTOTUNE).cache().shuffle(1000).batch(1)
@@ -148,7 +156,7 @@ if __name__ == '__main__':
         tf.data.Dataset.zip((train_photos,train_paintings)),
         epochs = EPOCHS,
         verbose = 1,
-        callbacks = [monitor, ckpt_callback]
+        callbacks = callback_list
     )
 
     # Final model weights

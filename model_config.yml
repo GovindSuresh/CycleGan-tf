@@ -14,6 +14,7 @@
     #Callbacks
     MONITOR: False
     CKPTS: False
+    TENSORBOARD : False
 
     # Model parameters
     INPUT_SHAPE: 
