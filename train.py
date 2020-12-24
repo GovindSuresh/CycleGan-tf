@@ -40,7 +40,7 @@ def preprocess_test_image(img):
     # Resize
     img = tf.image.resize(img, INPUT_SHAPE[:-1])
     img = tf.cast(img, dtype=tf.float32)
-    return (img/127.5) - 1.0
+    return (img/127.5) - 1.0 # normalize
 
 def load_train_image(filepath):
     '''
