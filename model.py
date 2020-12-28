@@ -12,7 +12,7 @@ class ReflectionPad2D(layers.Layer):
 
     def call(self, input_tensor, mask=None):
         padding_width, padding_height = self.padding
-        padding_tensor = [[0,0], [padding_height, padding_height],[padding_width, padding_width], [0,0]]
+        padding_tensor = [[0,0], [padding_height, padding_height],[padding_width, padding_width], [0,0],]
 
         return tf.pad(input_tensor, padding_tensor, mode='REFLECT')
 
@@ -93,17 +93,17 @@ def build_generator(input_shape, k_init, gamma_init):
 
     #Upsampling layers
     x = layers.Conv2DTranspose(128, kernel_size=(3,3), kernel_initializer=k_init, strides=(2,2), padding='same',
-                            use_bias=False, gamma_initializer = gamma_init)(x)
-    x = InstanceNormalization(axis=-1)(x)
+                            use_bias=False)(x)
+    x = InstanceNormalization(axis=-1, gamma_initializer = gamma_init)(x)
     x = layers.Activation('relu')(x)
-    x = layers.Conv2DTranspose(64, kernel_size=(3,3), kernel_initializer=k_init, strides=(2,2) padding='same',
-                            use_bias=False, gamma_initializer = gamma_init)(x)
-    x = InstanceNormalization(axis=-1)(x)
+    x = layers.Conv2DTranspose(64, kernel_size=(3,3), kernel_initializer=k_init, strides=(2,2), padding='same',
+                            use_bias=False)(x)
+    x = InstanceNormalization(axis=-1, gamma_initializer = gamma_init)(x)
     x = layers.Activation('relu')(x)
 
     # Final block 
     last_layer = ReflectionPad2D(padding=(3,3))(x)
-    last_layer = layers.Conv2D(3, kernel_size=(7,7), padding='valid')(x)
+    last_layer = layers.Conv2D(3, kernel_size=(7,7), padding='valid')(last_layer)
     
     # as with the original paper, the last activation is tanh rather than relu 
     last_layer = layers.Activation('tanh')(last_layer)
@@ -111,7 +111,7 @@ def build_generator(input_shape, k_init, gamma_init):
     return tf.keras.models.Model(inputs=inp, outputs=last_layer)
 
 
-def build_discriminator(input_shape, k_init):
+def build_discriminator(input_shape, k_init, gamma_init):
     
     inp = layers.Input(shape=input_shape)
     

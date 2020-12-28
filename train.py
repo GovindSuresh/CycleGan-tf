@@ -1,5 +1,6 @@
 import tensorflow as tf
 import yaml
+import datetime
 from model import *
 
 ###########################
@@ -89,12 +90,14 @@ if __name__ == '__main__':
     GEN_LR = param_dict['GEN_LR']
     GEN_BETA = param_dict['GEN_BETA']
     EPOCHS = param_dict['EPOCHS']
-    K_INIT = tf.keras.initializers.RandomNormal(mean=0.0,stddev=0.02)
+    K_INIT = tf.keras.initializers.RandomNormal(mean=0.0, stddev=0.02)
+    GAMMA_INIT = tf.keras.initializers.RandomNormal(mean=0.0, stddev=0.02)
 
-    # CHECKPOINT PARAMETERS
+    # CALLBACKS PARAMETERS
     MONITOR = param_dict['MONITOR']
     CHECKPOINTS = param_dict['CKPTS']
     TENSORBOARD = param_dict['TENSORBOARD']
+    LOG_DIR = param_dict['TBOARD_LOGDIR']
 
     # GENERAL
     SAVE_FORMAT = param_dict['SAVE_FORMAT']
@@ -116,11 +119,11 @@ if __name__ == '__main__':
 
     # Create generators, discriminators and CycleGAN model
 
-    generator_g = build_generator(input_shape=INPUT_SHAPE, k_init = K_INIT)
-    generator_f = build_generator(input_shape=INPUT_SHAPE, k_init = K_INIT)
+    generator_g = build_generator(input_shape=INPUT_SHAPE, k_init=K_INIT, gamma_init=GAMMA_INIT)
+    generator_f = build_generator(input_shape=INPUT_SHAPE, k_init=K_INIT, gamma_init=GAMMA_INIT)
 
-    discriminator_x = build_discriminator(input_shape=INPUT_SHAPE, k_init= K_INIT)
-    discriminator_y = build_discriminator(input_shape=INPUT_SHAPE, k_init=K_INIT)
+    discriminator_x = build_discriminator(input_shape=INPUT_SHAPE, k_init= K_INIT, gamma_init=GAMMA_INIT)
+    discriminator_y = build_discriminator(input_shape=INPUT_SHAPE, k_init=K_INIT, gamma_init=GAMMA_INIT)
 
     c_gan_model = CycleGAN(discrim_x = discriminator_x, discrim_y = discriminator_y, gen_G = generator_g, gen_F = generator_f )
 
@@ -135,6 +138,8 @@ if __name__ == '__main__':
         discrim_loss_fn = discriminator_loss 
     )
 
+    
+
     # Set up Callbacks
     callback_list = []
     if MONITOR == True:
@@ -147,7 +152,7 @@ if __name__ == '__main__':
         callback_list.append(ckpt_callback)
 
     if TENSORBOARD == True:
-        log_dir = LOG_DIR + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        log_dir = LOG_DIR + datetime.datetime.now().strftime("%Y%m%d-%H%M")
         tensorboard = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
         callback_list.append(tensorboard)
     

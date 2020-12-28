@@ -14,7 +14,8 @@
     #Callbacks
     MONITOR: False
     CKPTS: False
-    TENSORBOARD : False
+    TENSORBOARD : True
+    TBOARD_LOGDIR : "logs/fit/"
 
     # Model parameters
     INPUT_SHAPE: 
