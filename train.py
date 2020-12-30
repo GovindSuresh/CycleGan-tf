@@ -113,9 +113,6 @@ if __name__ == '__main__':
     train_paintings = train_paintings.map(load_train_image, num_parallel_calls = AUTOTUNE).cache().shuffle(1000).batch(1)
     train_photos = train_photos.map(load_train_image, num_parallel_calls = AUTOTUNE).cache().shuffle(1000).batch(1)
 
-    test_paintings = test_paintings.map(load_test_image, num_parallel_calls = AUTOTUNE).cache().shuffle(1000).batch(1)
-    test_photos = test_photos.map(load_test_image, num_parallel_calls = AUTOTUNE).cache().shuffle(1000).batch(1)
-
 
     # Create generators, discriminators and CycleGAN model
 
@@ -138,8 +135,6 @@ if __name__ == '__main__':
         discrim_loss_fn = discriminator_loss 
     )
 
-    
-
     # Set up Callbacks
     callback_list = []
     if MONITOR == True:
@@ -148,7 +143,7 @@ if __name__ == '__main__':
     
     if CHECKPOINTS == True: 
         ckpt_callback = tf.keras.callbacks.ModelCheckpoint(
-            filepath = CHECKPOINT_FILEPATH, save_weights_only=True, save_format = SAVE_FORMAT, save_freq=562*5) #saves every 5 epochs
+            filepath = CHECKPOINT_FILEPATH, save_weights_only=True, save_format = SAVE_FORMAT, save_freq=562*10) #saves every 10 epochs
         callback_list.append(ckpt_callback)
 
     if TENSORBOARD == True:
@@ -158,7 +153,7 @@ if __name__ == '__main__':
     
     # Fit
     c_gan_model.fit(
-        tf.data.Dataset.zip((train_photos,train_paintings)),
+        tf.data.Dataset.zip((train_paintings,train_photos)),
         epochs = EPOCHS,
         verbose = 1,
         callbacks = callback_list

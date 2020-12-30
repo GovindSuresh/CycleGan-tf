@@ -1,20 +1,21 @@
 ---
     # Filepaths
-    PAINT_TRAIN_PATH: "datasets/ukiyoe2photo/trainA"
-    PHOTO_TRAIN_PATH: "datasets/ukiyoe2photo/trainB"
-    PAINT_TEST_PATH: "datasets/ukiyoe2photo/testA"
-    PHOTO_TEST_PATH: "datasets/ukiyoe2photo/testB"
+    PAINT_TRAIN_PATH: "datasets/vangogh2photo/trainA"
+    PHOTO_TRAIN_PATH: "datasets/vangogh2photo/trainB"
+    PAINT_TEST_PATH: "datasets/vangogh2photo/testA"
+    PHOTO_TEST_PATH: "datasets/vangogh2photo/testB"
     MONITOR_IMAGE_FILEPATH: "training/train_imgs"
     CHECKPOINT_FILEPATH: "training/model_ckp/cgan_ckpts.{epoch:03d}"
-    FINAL_WEIGHTS_PATH: "training/model_weights/ukiyoe2photo_final_weights"
+    FINAL_WEIGHTS_PATH: "saved_models/vg2photo-2020-12-30/model_weights/vg2p-2020-12-30"
+    INF_IMG_PATH:  "saved_models/vg2photo-2020-12-30/inference_images/"
 
     # General parameters
     SAVE_FORMAT: 'tf'
     
     #Callbacks
     MONITOR: False
-    CKPTS: False
-    TENSORBOARD : True
+    CKPTS: True
+    TENSORBOARD : False
     TBOARD_LOGDIR : "logs/fit/"
 
     # Model parameters
