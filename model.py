@@ -231,8 +231,8 @@ class CycleGAN(tf.keras.Model):
             identity_loss_F = self.identity_loss_fn(real_x, identity_x) * self.lambda_val_cycle * self.lambda_val_identity
             
             # Cycle loss
-            cycle_loss_G = self.cycle_loss_fn(real_y, generated_y) * self.lambda_val_cycle
-            cycle_loss_F = self.cycle_loss_fn(real_x, generated_x) * self.lambda_val_cycle
+            cycle_loss_G = self.cycle_loss_fn(real_y, cycle_y) * self.lambda_val_cycle
+            cycle_loss_F = self.cycle_loss_fn(real_x, cycle_x) * self.lambda_val_cycle
             
             # Total generator loss
             gen_G_total_loss = gen_G_loss + identity_loss_G + cycle_loss_G
@@ -241,7 +241,6 @@ class CycleGAN(tf.keras.Model):
             # Discriminator_loss
             d_loss_x = self.discrim_loss_fn(discrim_real_x, discrim_generated_x)
             d_loss_y = self.discrim_loss_fn(discrim_real_y, discrim_generated_y)
-            
             
         ### CALCULATE GRADIENTS
             
