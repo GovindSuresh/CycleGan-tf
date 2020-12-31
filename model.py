@@ -269,8 +269,8 @@ class CycleGAN(tf.keras.Model):
         }
 
 ## CUSTOM CALLBACKS
-# Gan Monitor callback to print out images during training - taken from https://keras.io/examples/generative/cyclegan/
 
+# GAN Monitor callback to print out images during training - taken from https://keras.io/examples/generative/cyclegan/
 class GANMonitor(tf.keras.callbacks.Callback):
     '''
     Callback to generate and save images after each epoch
@@ -307,5 +307,25 @@ class GANMonitor(tf.keras.callbacks.Callback):
                                 )
             plt.show()
             plt.close()
+
+# Linear Decay of learning rate
+# We use the LearningRateSchedule tool from tf.keras.optimizers rather than the callback
+# As we need access to the initial LR
+class LinearDecayCallback(tf.keras.optimizers.schedules.LearningRateSchedule):
+
+    def __init__(self, initial_lr, decay_step, total_steps):
+        super(LinearDecayCallback, self).__init__()
+        self.initial_lr = initial_lr
+        self.decay_step = decay_step
+        self.total_steps = total_steps
+        self.current_lr = initial_lr
+        #tf.Variable(initial_value=initial_lr, trainable=False, dtype=tf.float32)
+
+    def __call__(self, step):
+
+        self.current_lr = tf.cond( step <= self.decay_step, true_fn = lambda: self.initial_lr, 
+                false_fn = lambda: self.initial_lr * (1 - 1/(self.total_steps - self.decay_step) * (step - self.decay_step))
+            )
         
+        return self.current_lr
         

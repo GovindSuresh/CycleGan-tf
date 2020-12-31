@@ -65,6 +65,10 @@ def load_test_image(filepath):
 
     return(img)
 
+############
+# TRAINING #
+############
+
 if __name__ == '__main__':
 
     # Check how many GPU's available
@@ -90,6 +94,11 @@ if __name__ == '__main__':
     GEN_LR = param_dict['GEN_LR']
     GEN_BETA = param_dict['GEN_BETA']
     EPOCHS = param_dict['EPOCHS']
+    
+    LR_SCHEDULE = param_dict['LR_SCHEDULE']
+    if LR_SCHEDULE == True:
+        DECAY_START = param_dict['DECAY_START']
+
     K_INIT = tf.keras.initializers.RandomNormal(mean=0.0, stddev=0.02)
     GAMMA_INIT = tf.keras.initializers.RandomNormal(mean=0.0, stddev=0.02)
 
@@ -124,13 +133,34 @@ if __name__ == '__main__':
 
     c_gan_model = CycleGAN(discrim_x = discriminator_x, discrim_y = discriminator_y, gen_G = generator_g, gen_F = generator_f )
 
-    # Compile model
+    # Optimizers
+    if LR_SCHEDULE == True:
+        print('Using Linear Decay LR Schedule')
+        
+        # Schedule:
+        d_schedule = LinearDecayCallback(initial_lr=DISCRIM_LR, decay_step=DECAY_START*len(train_paintings),
+                            total_steps=EPOCHS*len(train_paintings))
+        
+        g_schedule = LinearDecayCallback(initial_lr=GEN_LR, decay_step=DECAY_START*len(train_paintings),
+                            total_steps=EPOCHS*len(train_paintings))
 
+        disc_optimizer_x = tf.keras.optimizers.Adam(learning_rate=d_schedule, beta_1=DISCRIM_BETA)
+        disc_optimizer_y = tf.keras.optimizers.Adam(learning_rate=d_schedule, beta_1=DISCRIM_BETA)
+        gen_optimizer_g = tf.keras.optimizers.Adam(learning_rate=g_schedule, beta_1=GEN_BETA)
+        gen_optimizer_f = tf.keras.optimizers.Adam(learning_rate=g_schedule, beta_1=GEN_BETA)
+
+    else:
+        disc_optimizer_x = tf.keras.optimizers.Adam(learning_rate=DISCRIM_LR, beta_1=DISCRIM_BETA)
+        disc_optimizer_y = tf.keras.optimizers.Adam(learning_rate=DISCRIM_LR, beta_1=DISCRIM_BETA)
+        gen_optimizer_g = tf.keras.optimizers.Adam(learning_rate=GEN_LR, beta_1=GEN_BETA)
+        gen_optimizer_f = tf.keras.optimizers.Adam(learning_rate=GEN_LR, beta_1=GEN_BETA)
+
+    # Compile model
     c_gan_model.compile(
-        discrim_x_optimizer = tf.keras.optimizers.Adam(learning_rate=DISCRIM_LR, beta_1=DISCRIM_BETA),
-        discrim_y_optimizer = tf.keras.optimizers.Adam(learning_rate=DISCRIM_LR, beta_1=DISCRIM_BETA),
-        gen_g_optimizer = tf.keras.optimizers.Adam(learning_rate=GEN_LR, beta_1=GEN_BETA),
-        gen_f_optimizer = tf.keras.optimizers.Adam(learning_rate=GEN_LR, beta_1=GEN_BETA),
+        discrim_x_optimizer = disc_optimizer_x,
+        discrim_y_optimizer = disc_optimizer_y,
+        gen_g_optimizer = gen_optimizer_g,
+        gen_f_optimizer = gen_optimizer_f,
         gen_loss_fn = generator_loss ,
         discrim_loss_fn = discriminator_loss 
     )

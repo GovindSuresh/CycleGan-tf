@@ -6,8 +6,8 @@
     PHOTO_TEST_PATH: "datasets/vangogh2photo/testB"
     MONITOR_IMAGE_FILEPATH: "training/train_imgs"
     CHECKPOINT_FILEPATH: "training/model_ckp/cgan_ckpts.{epoch:03d}"
-    FINAL_WEIGHTS_PATH: "saved_models/vg2photo-2020-12-30/model_weights/vg2p-2020-12-30"
-    INF_IMG_PATH:  "saved_models/vg2photo-2020-12-30/inference_images/"
+    FINAL_WEIGHTS_PATH: "saved_models/vg2photo-2020-12-31/model_weights/vg2p-2020-12-31"
+    INF_IMG_PATH:  "saved_models/vg2photo-2020-12-31/inference_images/"
 
     # General parameters
     SAVE_FORMAT: 'tf'
@@ -15,8 +15,8 @@
     #Callbacks
     MONITOR: False
     CKPTS: True
-    TENSORBOARD : False
-    TBOARD_LOGDIR : "logs/fit/"
+    TENSORBOARD: False
+    TBOARD_LOGDIR: "logs/fit/"
 
     # Model parameters
     INPUT_SHAPE: 
@@ -27,7 +27,9 @@
     DISCRIM_BETA: 0.5     
     GEN_LR: 0.0002
     GEN_BETA: 0.5
-    EPOCHS: 90
+    EPOCHS: 200
+    LR_SCHEDULE: True
+    DECAY_START: 100
 
 
 
